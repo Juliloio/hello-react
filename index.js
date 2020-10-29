@@ -1,7 +1,9 @@
+// import packages
 const express  = require('express');
 const mongoose = require('mongoose');
 const cors     = require('cors');
 const morgan   = require('morgan');
+const path     = require('path');
 
 // config vars
 const port = process.env.PORT        || 4000;
@@ -20,50 +22,38 @@ mongoose
   })
   .catch(err => console.error(`Connection error ${err}`));
 
-// todo el middleware aca abajo y antes del listen
+// serve React frontend
+app.use(express.static('public'));
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// middleware
+// parsear bodys con json
 app.use(express.json());
+// usar cors
 app.use(cors());
+// logger para desarrollo
 app.use(morgan('dev'));
+// api router
 app.use('/api', require('./api/routes/note'));
 
-// los middlewares se ejecutan en orden para todas las peticiones
-// salvo que no coincida la ruta
-// (solo para el 4to middleware en este caso)  
-app.use(express.json());                        // 1er middleware
-app.use(cors());                                // 2do middleware
-app.use(morgan('dev'));                         // 3er middleware
-app.use('/api', require('./api/routes/note'));  // 4to middleware
-// si el cliente NO hace una peticion a algun endpoint de la API
-// entonces usamos una ruta que devuelva un status code 404
-// 5to middleware (error 404 not found)
+// error handlers (despues de las rutas de la API)
+// 404 not found
 app.use((req, res, next) => {
   const err = new Error('Not found');
   err.status = 404;
   next(err);
 });
-// no terminamos la cadena de middlewares ahi
-// la pasamos a un 6to middleware que responda al cliente
-// con el error 404 o 500 si vino de otro lado el problema
+// algun error distinto a not found
+// defaultea a 500
 app.use((err, req, res, next) => {
   res.status(err.status || 500);
-  // para mas detalles usar: console.error(err.stack)
+  // DEBUG: console.error(err.stack)
   res.json({ error: err.message });
 });
-
 
 // listen
 app.listen(port, () => {
   console.log(`Server listening on port ${port}`)
-});  
-// imports
-// path es un modulo base de NodeJS, no hay que instalarlo con npm
-const path = require('path');
-// mas imports ...
-
-// codigo ...
-
-// despues de conectarse a la base de datos
-app.use(express.static('public'));
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
