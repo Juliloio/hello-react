@@ -1,7 +1,8 @@
-const express = require('express');
-const router = express.Router();
 
-const Note = require('../models/Note');
+const express = require('express');
+const Note    = require('../models/Note');
+
+const router = express.Router();
 
 // POST /notes
 router.post('/notes', (req, res, next) => {
